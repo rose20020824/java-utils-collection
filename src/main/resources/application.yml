@@ -1,0 +1,56 @@
+# 服务器配置
+server:
+  # 作为容器内部子服务，绑定本地回环地址（127.0.0.1仅仅允许容器内部访问）
+  # 端口号由Nginx统一代理，请勿要修改，具体见项目README.md的反向代理说明
+  address: 127.0.0.1  # 服务器绑定的IP地址
+  port: 8080           # 服务监听端口
+
+
+# 日志配置
+# 日志级别配置（DEBUG < INFO < WARN < ERROR，级别越高输出日志越少）
+logging:
+  level:
+    com.aiadtech.robot: DEBUG
+    com.aiadtech.robot.mapper: DEBUG
+    org.elasticsearch.client.RestClient: ERROR
+    com.amazonaws.util.Base64: ERROR
+  logback:
+    rollingpolicy:
+      max-history: 7
+      max-file-size: 64MB
+  file:
+    # 日志存储路径，优先读取环境变量LOGGING_PATH，默认./runtime/logs
+    path: ${LOGGING_PATH:./runtime/logs}
+
+
+# Spring核心配置
+spring:
+  profiles:
+    active: ${APP_ENV:local}
+  application:
+    name: ${APP_NAME:robot}
+
+
+  # 数据库配置（MySQL）
+  datasource:
+    microservice:
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+
+      jdbc-url: "jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai&allowMultiQueries=true"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      mapper-locations: classpath:mapper/microservice/*.xml
+
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: ${REDIS_DB}  # Redis数据库编号（默认0，用于数据隔离）
+      password: ${REDIS_AUTH} # Redis认证密码（从环境变量读取，无密码则为空）
+
+thread:
+  core-pool-size: ${THREAD_POOL_CORE_POOL_SIZE}
+  max-pool-size: ${THREAD_POOL_MAX_POOL_SIZE}
+  keep-alive-time: ${THREAD_POOL_KEEP_ALIVE_TIME}
+  queue-capacity: ${THREAD_POOL_QUEUE_CAPACITY}
