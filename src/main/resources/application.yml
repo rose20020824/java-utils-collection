@@ -1,56 +1,91 @@
 # 服务器配置
 server:
-  # 作为容器内部子服务，绑定本地回环地址（127.0.0.1仅仅允许容器内部访问）
-  # 端口号由Nginx统一代理，请勿要修改，具体见项目README.md的反向代理说明
-  address: 127.0.0.1  # 服务器绑定的IP地址
-  port: 8080           # 服务监听端口
+  address: 127.0.0.1  # 绑定绑定地址(容器内服务建议保持127.0.0.1)
+  port: 8080           # 服务监听端口(由Nginx统一代理)
+  servlet:
+    context-path: /    # 应用上下文路径(默认根路径)
 
 
 # 日志配置
-# 日志级别配置（DEBUG < INFO < WARN < ERROR，级别越高输出日志越少）
 logging:
   level:
-    com.aiadtech.robot: DEBUG
-    com.aiadtech.robot.mapper: DEBUG
-    org.elasticsearch.client.RestClient: ERROR
-    com.amazonaws.util.Base64: ERROR
+    com.aiadtech.robot: DEBUG               # 应用核心包日志级别
+    com.aiadtech.robot.mapper: DEBUG        # MyBatis映射器日志级别
+    org.elasticsearch.client.RestClient: ERROR  #  Elasticsearch客户端日志级别
+    com.amazonaws.util.Base64: ERROR        # AWS工具类日志级别
+    root: INFO                               # 根日志级别
+  file:
+    path: ${LOGGING_PATH:./runtime/logs}    # 日志存储路径(支持环境变量)
   logback:
     rollingpolicy:
-      max-history: 7
-      max-file-size: 64MB
-  file:
-    # 日志存储路径，优先读取环境变量LOGGING_PATH，默认./runtime/logs
-    path: ${LOGGING_PATH:./runtime/logs}
+      max-history: 7                         # 日志保留天数
+      max-file-size: 64MB                    # 单个日志文件最大大小
+      total-size-cap: 512MB                  # 日志总大小限制
+      clean-history-on-start: false          # 启动时是否清理历史日志
 
 
 # Spring核心配置
 spring:
   profiles:
-    active: ${APP_ENV:local}
+    active: ${APP_ENV:local}                 # 激活环境(默认local)
   application:
-    name: ${APP_NAME:robot}
+    name: ${APP_NAME:robot}                  # 应用名称
 
-
-  # 数据库配置（MySQL）
+  # 数据库配置(MySQL)
   datasource:
-    microservice:
-      username: ${DB_USERNAME}
-      password: ${DB_PASSWORD}
-
-      jdbc-url: "jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai&allowMultiQueries=true"
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      mapper-locations: classpath:mapper/microservice/*.xml
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_DATABASE:local}?
+      characterEncoding=utf8&
+      useSSL=true&
+      serverTimezone=Asia/Shanghai&
+      allowMultiQueries=true&
+      autoReconnect=true&
+      reconnectAtTxEnd=true                # 连接参数优化
+    username: ${DB_USERNAME:root}            # 数据库用户名(默认root)
+    password: ${DB_PASSWORD:root}            # 数据库密码(默认root)
+    driver-class-name: com.mysql.cj.jdbc.Driver  # 数据库驱动
+    hikari: # 连接池配置
+      maximum-pool-size: 20                  # 最大连接数
+      minimum-idle: 5                        # 最小空闲连接
+      idle-timeout: 300000                   # 空闲连接超时时间(5分钟)
+      connection-timeout: 20000              # 连接超时时间(20秒)
+      max-lifetime: 1800000                  # 连接最大存活时间(30分钟)
 
   # Redis配置
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      database: ${REDIS_DB}  # Redis数据库编号（默认0，用于数据隔离）
-      password: ${REDIS_AUTH} # Redis认证密码（从环境变量读取，无密码则为空）
+      host: ${REDIS_HOST:127.0.0.1}          # Redis主机(默认本地)
+      port: ${REDIS_PORT:6379}               # Redis端口(默认6379)
+      database: ${REDIS_DB:0}                # 数据库编号
+      password: ${REDIS_AUTH:}               # 认证密码(默认空)
+      timeout: 2000                          # 连接超时时间(2秒)
+      lettuce: # Redis客户端配置
+        pool:
+          max-active: 8                      # 最大连接数
+          max-idle: 8                        # 最大空闲连接
+          min-idle: 2                        # 最小空闲连接
+          max-wait: -1                       # 最大等待时间(-1表示无限制)
+#      sentinel: # 哨兵模式配置
+#        enabled: ${REDIS_SENTINEL_ENABLE:false}
+#        master: ${REDIS_SENTINEL_MASTER_NAME:mymaster}
+#        nodes: ${REDIS_SENTINEL_NODES:0.0.0.0:26379;0.0.0.1:26379;0.0.0.2:26379}
 
+
+# 线程池配置
 thread:
-  core-pool-size: ${THREAD_POOL_CORE_POOL_SIZE}
-  max-pool-size: ${THREAD_POOL_MAX_POOL_SIZE}
-  keep-alive-time: ${THREAD_POOL_KEEP_ALIVE_TIME}
-  queue-capacity: ${THREAD_POOL_QUEUE_CAPACITY}
+  core-pool-size: ${THREAD_POOL_CORE_POOL_SIZE:8}        # 核心线程数
+  max-pool-size: ${THREAD_POOL_MAX_POOL_SIZE:120}        # 最大线程数
+  keep-alive-time: ${THREAD_POOL_KEEP_ALIVE_TIME:30}     # 空闲线程存活时间(秒)
+  queue-capacity: ${THREAD_POOL_QUEUE_CAPACITY:200}      # 任务队列容量
+
+
+# MyBatis配置(如果使用MyBatis)
+mybatis:
+  mapper-locations: classpath:mapper/microservice/*.xml  # Mapper映射文件路径
+  type-aliases-package: com.aiadtech.robot.entity        # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true                   # 下划线转驼峰命名
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 日志实现
+
+websocket:
+  port: 8081  # 与注解前缀保持一致
+  address: 0.0.0.0
