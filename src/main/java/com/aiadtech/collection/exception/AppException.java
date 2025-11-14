@@ -2,14 +2,12 @@ package com.aiadtech.collection.exception;
 
 
 import com.aiadtech.collection.constant.ErrorCode;
+import lombok.Getter;
 
+@Getter
 public class AppException extends RuntimeException {
 
     private final Integer code;
-
-    public Integer getCode() {
-        return this.code;
-    }
 
     public AppException(ErrorCode text) {
         super(text.getMessage());

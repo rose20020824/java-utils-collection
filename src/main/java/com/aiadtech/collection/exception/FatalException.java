@@ -2,7 +2,9 @@ package com.aiadtech.collection.exception;
 
 
 import com.aiadtech.collection.constant.ErrorCode;
+import lombok.Getter;
 
+@Getter
 public class FatalException extends RuntimeException {
     private final ErrorCode errorCode;
 
@@ -16,7 +18,4 @@ public class FatalException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
 }

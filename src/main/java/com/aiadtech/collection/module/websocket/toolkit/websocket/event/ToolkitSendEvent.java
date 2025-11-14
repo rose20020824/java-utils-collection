@@ -16,9 +16,9 @@ import lombok.NoArgsConstructor;
 public class ToolkitSendEvent {
 
     // 事件定义
-    public static final String EVENT_ERROR = "error"; // 错误
-    public static final String EVENT_PONG = "pong"; // ping包回应
-    public static final String EVENT_ANSWER_TEXT = "answerText"; // 新消息
+    public static final String EVENT_ERROR = "error";
+    public static final String EVENT_PONG = "pong";
+    public static final String EVENT_ANSWER_TEXT = "answerText";
 
     // 预定义实例
     public static final ToolkitSendEvent INSTANCE_PONG = new ToolkitSendEvent(EVENT_PONG);

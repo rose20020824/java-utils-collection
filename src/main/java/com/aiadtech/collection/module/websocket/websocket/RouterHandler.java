@@ -72,8 +72,7 @@ public class RouterHandler extends ChannelInboundHandlerAdapter {
             request.setUri(ROUTE_KEY);
             ctx.pipeline().addAfter(WebSocketServerProtocolHandler.class.getName(), handlerAdapter.getClass().getName(), handlerAdapter);
             super.channelRead(ctx, msg);
-            log.info("receive handler read, {} {}", uri.getQueryParams());
-            log.info("receive handler read, {} {}", handlerAdapter.getClass().toString(), ctx.channel().id().asLongText());
+            log.info("receive handler read, {} {}", uri.getQueryParams());;
             // 表单校验不通过时，3s后关闭当前连接
             if (handlerAdapter instanceof WsConnectValidation validation && !validation.validate(ctx, uri.getQueryParams().toSingleValueMap())) {
                 ctx.executor().scheduleAtFixedRate(ctx::close, 3, 3, TimeUnit.SECONDS);
